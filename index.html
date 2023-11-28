@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="styles.css" />
+    <title>Lights Out</title>
+  </head>
+  <body>
+    <h1>Lights Out</h1>
+    <div id="button-grid"></div>
+    <div id="buttons-container">
+      <button id="solve-button" onclick="solveLightsOut()">Solve Puzzle</button>
+      <button onclick="generateGrid()">New Puzzle</button>
+    </div>
+    <script>
+      // Function to toggle the state of a button and update its styling
+      function toggle(grid, i, j) {
+        const currentState = grid[i][j];
+        const newState = currentState === "1" ? "0" : "1";
+
+        // Toggle the state of the button
+        grid[i][j] = newState;
+        updateButtonState(i, j, newState);
+
+        // Toggle the state of the immediate neighbors
+        if (i > 0) toggleCell(grid, i - 1, j);
+        if (i < grid.length - 1) toggleCell(grid, i + 1, j);
+        if (j > 0) toggleCell(grid, i, j - 1);
+        if (j < grid[i].length - 1) toggleCell(grid, i, j + 1);
+      }
+
+      // Function to toggle the state of a cell
+      function toggleCell(grid, i, j) {
+        const currentState = grid[i][j];
+        const newState = currentState === "1" ? "0" : "1";
+        grid[i][j] = newState;
+        updateButtonState(i, j, newState);
+      }
+
+      // Function to update the state of a button in the DOM
+      function updateButtonState(i, j, newState) {
+        const button = document.getElementById(`but_${i}${j}`);
+        if (button) {
+          button.innerHTML = newState;
+          button.setAttribute("state", newState);
+        }
+      }
+
+      // Function to get the current state of the grid
+      function getGridState() {
+        const grid = [];
+        for (let i = 0; i < 5; i++) {
+          const row = [];
+          for (let j = 0; j < 5; j++) {
+            const button = document.getElementById(`but_${i}${j}`);
+            row.push(button.getAttribute("state"));
+          }
+          grid.push(row);
+        }
+        return grid;
+      }
+
+      // Function to create a deep copy of the grid
+      function copyGrid(grid) {
+        return grid.map((row) => row.map((cell) => Number(cell)));
+      }
+
+      // Global set to keep track of visited states
+      const visited = new Set();
+
+      function solveLightsOut() {
+        const initialState = getGridState();
+        visited.clear(); // Clear the set before each new puzzle
+        visited.add(JSON.stringify(initialState));
+
+        const queue = [{ grid: initialState, moves: 0 }];
+
+        while (queue.length > 0) {
+          const { grid, moves } = queue.shift();
+
+          console.log("Move", moves);
+          console.table(grid);
+
+          if (areAllLightsOff(grid)) {
+            console.log("Solution found in", moves, "moves");
+            return true;
+          }
+
+          for (let i = 0; i < 5; i++) {
+            for (let j = 0; j < 5; j++) {
+              const newGrid = copyGrid(grid);
+              toggle(newGrid, i, j);
+
+              const key = JSON.stringify(newGrid);
+              if (!visited.has(key)) {
+                visited.add(key);
+                queue.push({ grid: newGrid, moves: moves + 1 });
+              }
+            }
+          }
+        }
+
+        // Check if there are still lights turned on
+        if (!areAllLightsOff(initialState)) {
+          console.log("No solution found for the current puzzle.");
+          return false;
+        }
+
+        console.log("No solution found for the current puzzle.");
+        return true;
+      }
+
+      // Check if all lights are off
+      function areAllLightsOff(grid) {
+        return grid.every((row) => row.every((cell) => cell === "0"));
+      }
+
+      // Function to generate the initial grid of buttons
+      function generateGrid() {
+        const buttonGrid = document.getElementById("button-grid");
+
+        // Clear existing content
+        buttonGrid.innerHTML = "";
+
+        const table = document.createElement("table");
+        buttonGrid.appendChild(table);
+
+        // Create buttons for each cell in the grid
+        for (let i = 0; i < 5; i++) {
+          const row = document.createElement("tr");
+
+          for (let j = 0; j < 5; j++) {
+            const cell = document.createElement("td");
+            const button = document.createElement("button");
+
+            // Set button properties
+            button.id = `but_${i}${j}`;
+            button.innerHTML = Math.random() < 0.5 ? "1" : "0";
+            button.setAttribute("state", button.innerHTML);
+
+            // Append button to the cell and cell to the row
+            cell.appendChild(button);
+            row.appendChild(cell);
+          }
+
+          // Append the row to the table
+          table.appendChild(row);
+        }
+      }
+
+      // Execute the generateGrid function when the window is fully loaded
+      window.onload = function () {
+        generateGrid(); // Generate the initial grid first
+      };
+    </script>
+  </body>
+</html>
+
+
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="styles.css" />
+    <title>Lights Out</title>
+</head>
+<body>
+    <h1>Lights Out</h1>
+    <div id="button-grid"></div>
+    <div id="buttons-container">
+        <button id="solve-button" onclick="solveLightsOut()">Solve Puzzle</button>
+        <button onclick="generateGrid()">New Puzzle</button>
+    </div>
+    <script src="app.js"></script>
+    <script>
+        const gridSize = 5; // Change this to your desired grid size
+
+        function toggle(grid, i, j) {
+            const currentState = grid[i][j];
+            const newState = currentState === '1' ? '0' : '1';
+
+            grid[i][j] = newState;
+            updateButtonState(i, j, newState);
+
+            if (i > 0) toggleCell(grid, i - 1, j);
+            if (i < grid.length - 1) toggleCell(grid, i + 1, j);
+            if (j > 0) toggleCell(grid, i, j - 1);
+            if (j < grid[i].length - 1) toggleCell(grid, i, j + 1);
+        }
+
+        function toggleCell(grid, i, j) {
+            const currentState = grid[i][j];
+            const newState = currentState === '1' ? '0' : '1';
+            grid[i][j] = newState;
+            updateButtonState(i, j, newState);
+        }
+
+        function updateButtonState(i, j, newState) {
+            const button = document.getElementById(`but_${i}${j}`);
+            if (button) {
+                button.innerHTML = newState;
+                button.setAttribute('state', newState);
+            }
+        }
+
+        function getGridState() {
+            const grid = [];
+            for (let i = 0; i < gridSize; i++) {
+                const row = [];
+                for (let j = 0; j < gridSize; j++) {
+                    const button = document.getElementById(`but_${i}${j}`);
+                    row.push(button.getAttribute('state'));
+                }
+                grid.push(row);
+            }
+            return grid;
+        }
+
+        function copyGrid(grid) {
+            return grid.map(row => [...row]);
+        }
+
+        const visited = new Set();
+
+        function solveLightsOut() {
+            const initialState = getGridState();
+            visited.clear();
+            visited.add(JSON.stringify(initialState));
+
+            const queue = [{ grid: initialState, moves: 0 }];
+
+            while (queue.length > 0) {
+                const { grid, moves } = queue.shift();
+
+                console.log("Move", moves);
+                console.table(grid);
+
+                if (areAllLightsOff(grid)) {
+                    console.log("Solution found in", moves, "moves");
+                    return true;
+                }
+
+                for (let i = 0; i < gridSize; i++) {
+                    for (let j = 0; j < gridSize; j++) {
+                        const newGrid = copyGrid(grid);
+                        toggle(newGrid, i, j);
+
+                        const key = JSON.stringify(newGrid);
+                        if (!visited.has(key)) {
+                            visited.add(key);
+                            queue.push({ grid: newGrid, moves: moves + 1 });
+                        }
+                    }
+                }
+            }
+
+            if (!areAllLightsOff(initialState)) {
+                console.log("No solution found for the current puzzle.");
+                return false;
+            }
+
+            console.log("No solution found for the current puzzle.");
+            return true;
+        }
+
+        function areAllLightsOff(grid) {
+            return grid.every(row => row.every(cell => cell === '0'));
+        }
+
+        function generateGrid() {
+            const buttonGrid = document.getElementById("button-grid");
+
+            buttonGrid.innerHTML = '';
+
+            const table = document.createElement("table");
+            buttonGrid.appendChild(table);
+
+            for (let i = 0; i < gridSize; i++) {
+                const row = document.createElement("tr");
+
+                for (let j = 0; j < gridSize; j++) {
+                    const cell = document.createElement("td");
+                    const button = document.createElement("button");
+
+                    button.id = `but_${i}${j}`;
+                    button.innerHTML = Math.random() < 0.5 ? '1' : '0';
+                    button.setAttribute('state', button.innerHTML);
+
+                    cell.appendChild(button);
+                    row.appendChild(cell);
+                }
+
+                table.appendChild(row);
+            }
+        }
+
+        window.onload = function () {
+            generateGrid();
+        };
+    </script>
+</body>
+</html> -->
